@@ -30,11 +30,24 @@ export interface AnalysisResult {
   }>;
 }
 
+const ALLOWED_IMAGE_HOSTS = [
+  'pbs.twimg.com',
+  'ton.twimg.com',
+  'abs.twimg.com',
+  'video.twimg.com',
+];
+
 /**
  * Fetch image and convert to base64 for Gemini multimodal input
  */
 async function fetchImageAsBase64(url: string): Promise<{ data: string; mimeType: string } | null> {
   try {
+    const parsed = new URL(url);
+    if (!ALLOWED_IMAGE_HOSTS.includes(parsed.hostname)) {
+      console.warn('Blocked image fetch from non-Twitter domain:', parsed.hostname);
+      return null;
+    }
+
     const response = await fetch(url);
     if (!response.ok) return null;
 
@@ -100,7 +113,7 @@ export async function analyzeTweet(
   const prompt = buildAnalysisPrompt(tweetText, authorInfo, imageUrls.length > 0);
 
   // Prepare content parts
-  const parts: any[] = [{ text: prompt }];
+  const parts: Array<{ text: string } | { inlineData: { data: string; mimeType: string } }> = [{ text: prompt }];
 
   // Add images if present
   if (imageUrls.length > 0) {

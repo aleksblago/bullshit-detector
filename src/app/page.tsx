@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { UrlInput } from '@/components/url-input';
 import { AnalysisResultComponent } from '@/components/analysis-result';
+import { AnalysisResult } from '@/lib/gemini';
 
 const LOADING_MESSAGES = [
   "Sniffing for BS...",
@@ -17,9 +18,8 @@ const LOADING_MESSAGES = [
 ];
 
 export default function Home() {
-  const [url, setUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState('');
   const [loadingMessage, setLoadingMessage] = useState('');
 
@@ -33,7 +33,6 @@ export default function Home() {
   };
 
   const handleSubmit = async (submittedUrl: string) => {
-    setUrl(submittedUrl);
     setIsLoading(true);
     setError('');
     setResult(null);

@@ -19,24 +19,22 @@ export function ScoreGauge({ score, verdict }: ScoreGaugeProps) {
   const [animatedScore, setAnimatedScore] = useState(0);
 
   useEffect(() => {
-    // Animate score on mount
-    const duration = 1000; // 1 second
-    const steps = 60;
-    const stepValue = score / steps;
-    const stepDuration = duration / steps;
+    const duration = 1000;
+    const startTime = performance.now();
 
-    let currentStep = 0;
-    const interval = setInterval(() => {
-      currentStep++;
-      if (currentStep >= steps) {
-        setAnimatedScore(score);
-        clearInterval(interval);
-      } else {
-        setAnimatedScore(Math.round(stepValue * currentStep));
+    function animate(currentTime: number) {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // Ease-out curve
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setAnimatedScore(Math.round(eased * score));
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
       }
-    }, stepDuration);
+    }
 
-    return () => clearInterval(interval);
+    requestAnimationFrame(animate);
   }, [score]);
 
   const color = getScoreColor(score);

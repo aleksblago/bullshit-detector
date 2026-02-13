@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { TWEET_URL_REGEX } from '@/lib/validation';
 
 interface UrlInputProps {
   onSubmit: (url: string) => void;
@@ -19,8 +20,7 @@ export function UrlInput({ onSubmit, isLoading }: UrlInputProps) {
   }, [url, error]);
 
   const validateUrl = (input: string): boolean => {
-    const tweetUrlRegex = /^https?:\/\/(twitter\.com|x\.com)\/[a-zA-Z0-9_]+\/status\/\d+/;
-    return tweetUrlRegex.test(input);
+    return TWEET_URL_REGEX.test(input);
   };
 
   const handleSubmit = (e: React.FormEvent) => {

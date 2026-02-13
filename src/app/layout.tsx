@@ -18,7 +18,6 @@ export const metadata: Metadata = {
   keywords: ["fact checker", "tweet fact check", "misinformation detector", "bias detector", "Twitter fact check", "X fact check", "AI fact checker", "bullshit detector", "fake news detector", "manipulation detector"],
   authors: [{ name: "Bullshit Detector" }],
   openGraph: {
-    title: "Bullshit Detector — AI-Powered Tweet Fact Checker",
     description: "Paste a tweet. Get the truth. AI-powered analysis scores posts 0-100% for truthfulness, detects bias, manipulation, and logical fallacies.",
     type: "website",
     siteName: "Bullshit Detector",
@@ -26,7 +25,6 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Bullshit Detector — AI-Powered Tweet Fact Checker",
     description: "Paste a tweet. Get the truth. AI-powered analysis scores posts 0-100% for truthfulness, detects bias, manipulation, and logical fallacies.",
   },
   robots: {

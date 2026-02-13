@@ -4,6 +4,15 @@ import { useState } from 'react';
 import { ScoreGauge } from './score-gauge';
 import { ReasonChip } from './reason-chip';
 
+function isSafeUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+  } catch {
+    return false;
+  }
+}
+
 interface AnalysisResult {
   score: number;
   verdict: string;
@@ -37,23 +46,6 @@ export function AnalysisResultComponent({ result }: AnalysisResultProps) {
   const [claimsExpanded, setClaimsExpanded] = useState(false);
   const [imageExpanded, setImageExpanded] = useState(false);
   const [sourcesExpanded, setSourcesExpanded] = useState(false);
-
-  const getClaimColor = (verdict: string) => {
-    switch (verdict) {
-      case 'true':
-        return 'text-green-400';
-      case 'false':
-        return 'text-red-400';
-      case 'misleading':
-        return 'text-orange-400';
-      case 'unverifiable':
-        return 'text-yellow-400';
-      case 'opinion':
-        return 'text-blue-400';
-      default:
-        return 'text-gray-400';
-    }
-  };
 
   const getClaimBadge = (verdict: string) => {
     switch (verdict) {
@@ -243,22 +235,24 @@ export function AnalysisResultComponent({ result }: AnalysisResultProps) {
 
           {sourcesExpanded && (
             <div className="px-6 pb-6 space-y-2">
-              {result.groundingSources.map((source, index) => (
-                <a
-                  key={index}
-                  href={source.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block p-3 rounded-lg hover:bg-[var(--bg-input)] transition-colors border border-[var(--border)]"
-                >
-                  <p className="text-[var(--accent)] hover:underline font-medium">
-                    {source.title}
-                  </p>
-                  <p className="text-xs text-[var(--text-muted)] truncate mt-1">
-                    {source.url}
-                  </p>
-                </a>
-              ))}
+              {result.groundingSources
+                .filter(source => isSafeUrl(source.url))
+                .map((source, index) => (
+                  <a
+                    key={index}
+                    href={source.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block p-3 rounded-lg hover:bg-[var(--bg-input)] transition-colors border border-[var(--border)]"
+                  >
+                    <p className="text-[var(--accent)] hover:underline font-medium">
+                      {source.title}
+                    </p>
+                    <p className="text-xs text-[var(--text-muted)] truncate mt-1">
+                      {source.url}
+                    </p>
+                  </a>
+                ))}
             </div>
           )}
         </div>
