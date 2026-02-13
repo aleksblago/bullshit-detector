@@ -1,32 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { ScoreGauge } from './score-gauge';
 import { ReasonChip } from './reason-chip';
+import type { AnalysisResult } from '@/lib/gemini';
 
-interface AnalysisResult {
-  score: number;
-  verdict: string;
-  summary: string;
-  reasons: Array<{
-    tag: string;
-    type: 'positive' | 'negative' | 'neutral';
-    explanation: string;
-  }>;
-  claims: Array<{
-    claim: string;
-    verdict: 'true' | 'false' | 'misleading' | 'unverifiable' | 'opinion';
-    evidence: string;
-  }>;
-  imageAnalysis: {
-    description: string;
-    concerns: string[];
-    likelyAuthentic: boolean;
-  } | null;
-  groundingSources?: Array<{
-    title: string;
-    url: string;
-  }>;
+function isSafeUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+  } catch {
+    return false;
+  }
 }
 
 interface AnalysisResultProps {
@@ -38,22 +23,10 @@ export function AnalysisResultComponent({ result }: AnalysisResultProps) {
   const [imageExpanded, setImageExpanded] = useState(false);
   const [sourcesExpanded, setSourcesExpanded] = useState(false);
 
-  const getClaimColor = (verdict: string) => {
-    switch (verdict) {
-      case 'true':
-        return 'text-green-400';
-      case 'false':
-        return 'text-red-400';
-      case 'misleading':
-        return 'text-orange-400';
-      case 'unverifiable':
-        return 'text-yellow-400';
-      case 'opinion':
-        return 'text-blue-400';
-      default:
-        return 'text-gray-400';
-    }
-  };
+  const safeSources = useMemo(
+    () => (result.groundingSources ?? []).filter(s => isSafeUrl(s.url)),
+    [result.groundingSources]
+  );
 
   const getClaimBadge = (verdict: string) => {
     switch (verdict) {
@@ -220,14 +193,14 @@ export function AnalysisResultComponent({ result }: AnalysisResultProps) {
       )}
 
       {/* Sources */}
-      {result.groundingSources && result.groundingSources.length > 0 && (
+      {safeSources.length > 0 && (
         <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden">
           <button
             onClick={() => setSourcesExpanded(!sourcesExpanded)}
             className="w-full px-6 py-4 flex items-center justify-between hover:bg-[var(--bg-input)] transition-colors"
           >
             <h3 className="text-xl font-semibold text-[var(--text-primary)]">
-              Verification Sources ({result.groundingSources.length})
+              Verification Sources ({safeSources.length})
             </h3>
             <svg
               className={`w-5 h-5 text-[var(--text-secondary)] transition-transform ${
@@ -243,7 +216,7 @@ export function AnalysisResultComponent({ result }: AnalysisResultProps) {
 
           {sourcesExpanded && (
             <div className="px-6 pb-6 space-y-2">
-              {result.groundingSources.map((source, index) => (
+              {safeSources.map((source, index) => (
                 <a
                   key={index}
                   href={source.url}

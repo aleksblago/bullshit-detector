@@ -2,7 +2,7 @@
  * URL validation and sanitization for Twitter/X post URLs
  */
 
-const TWEET_URL_REGEX = /^https?:\/\/(twitter\.com|x\.com)\/[a-zA-Z0-9_]+\/status\/(\d+)/;
+export const TWEET_URL_REGEX = /^https?:\/\/(twitter\.com|x\.com)\/[a-zA-Z0-9_]+\/status\/(\d+)/;
 const MAX_INPUT_LENGTH = 300;
 
 export interface ValidationResult {
@@ -41,6 +41,14 @@ export function validateTweetUrl(input: string): ValidationResult {
   }
 
   const tweetId = match[2];
+
+  // Validate tweet ID is a reasonable numeric value
+  if (tweetId.length > 20 || !/^\d+$/.test(tweetId)) {
+    return {
+      valid: false,
+      error: 'Invalid tweet ID in URL',
+    };
+  }
 
   return {
     valid: true,

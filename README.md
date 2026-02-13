@@ -1,36 +1,146 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Bullshit Detector
 
-## Getting Started
+AI-powered fact-checker for Twitter/X posts. Paste a tweet URL, get an instant truthfulness score with detailed analysis of claims, bias, manipulation tactics, and image authenticity.
 
-First, run the development server:
+## How It Works
+
+1. **Paste a tweet URL** — any `twitter.com` or `x.com` post link
+2. **AI analyzes the post** — Gemini 2.5 Flash with Google Search grounding verifies claims against live web data
+3. **Get a score from 0-100%** — with a detailed breakdown of why
+
+### What It Detects
+
+- **Factual accuracy** — individual claims verified against real sources
+- **Logical fallacies** — ad hominem, straw man, false dichotomy, appeal to emotion, etc.
+- **Manipulation tactics** — fear-mongering, outrage bait, false urgency, tribal signaling
+- **Bias indicators** — loaded language, cherry-picked data, omitted context
+- **Image analysis** — AI-generated images, manipulated photos, misleading visual context
+
+### Score Ranges
+
+| Score | Verdict | Meaning |
+|-------|---------|---------|
+| 90-100% | Verified Facts | Claims are substantiated by multiple sources |
+| 70-89% | Mostly True | Largely accurate with minor issues |
+| 50-69% | Mixed/Misleading | Mix of true and false, or misleading framing |
+| 25-49% | Mostly BS | Predominantly misleading, biased, or manipulative |
+| 0-24% | Complete BS | Outright lies, fabrications, or pure manipulation |
+
+## Examples
+
+### Factual post (scores high)
+
+```
+URL: https://x.com/OpenAI/status/2022009583653576787
+Score: 95% — Verified Facts
+Reasons: "Factually Accurate", "Source Credibility", "Specific Details Corroborated"
+```
+
+A product announcement from an official account about a real rollout — straightforward and verifiable.
+
+### Political spin (scores mid-range)
+
+```
+URL: https://x.com/WhiteHouse/status/2016290018248008140
+Score: ~50-65% — Mixed/Misleading
+Reasons: "Loaded Language", "Cherry-Picked Data", "Implicit Success Bias"
+```
+
+Contains some real economic data but mixed with subjective claims ("RESPECTED again") and heavy political framing.
+
+### Confirmed manipulation (scores low)
+
+```
+URL: https://x.com/ddale8/status/2014414198583824770
+Score: ~15-25% — Mostly BS (analyzing the underlying claim)
+Reasons: "Manipulated Image", "Institutional Misinformation", "Deliberately Misleading"
+```
+
+Reports on a confirmed AI-altered photo presented as real by an official account.
+
+## Local Development
+
+### Prerequisites
+
+- Node.js 18+
+- A [Google AI Studio](https://aistudio.google.com/) API key
+
+### Setup
+
+```bash
+# Clone the repo
+git clone <repo-url>
+cd bullshit-detector
+
+# Install dependencies
+npm install
+
+# Create environment file
+cp .env.example .env.local
+# Edit .env.local and add your Gemini API key
+```
+
+### Environment Variables
+
+Create a `.env.local` file in the project root:
+
+```
+GEMINI_API_KEY=your_google_ai_studio_api_key_here
+```
+
+### Run
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) and paste a tweet URL.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Build
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm start
+```
 
-## Learn More
+## Deploy to Vercel
 
-To learn more about Next.js, take a look at the following resources:
+1. Push to GitHub
+2. Import the repo on [vercel.com](https://vercel.com)
+3. Add `GEMINI_API_KEY` as an environment variable in project settings
+4. Deploy
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Tech Stack
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Framework:** Next.js 16 (App Router)
+- **AI:** Google Gemini 2.5 Flash via `@google/genai`
+- **Fact-checking:** Gemini's Google Search grounding for real-time claim verification
+- **Styling:** Tailwind CSS (dark mode)
+- **Tweet data:** Twitter Syndication API with FxTwitter fallback
+- **Deployment:** Vercel
 
-## Deploy on Vercel
+## Architecture
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+app/
+  page.tsx              → Main UI (URL input + results display)
+  api/analyze/route.ts  → Server-side API (fetch tweet → Gemini analysis)
+components/
+  url-input.tsx         → URL input with validation
+  score-gauge.tsx       → SVG circular score display
+  analysis-result.tsx   → Full results layout
+  reason-chip.tsx       → Issue/indicator tag
+lib/
+  validation.ts         → URL validation, input sanitization
+  twitter.ts            → Tweet fetching (syndication + fallback)
+  gemini.ts             → Gemini API integration
+  prompts.ts            → Analysis prompt with injection defense
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Security
+
+- **API key protection** — Gemini key stays server-side in Next.js API routes, never sent to the browser
+- **URL validation** — strict regex accepts only `twitter.com` and `x.com` tweet URLs
+- **Prompt injection defense** — tweet content is wrapped in delimiters with explicit instructions to treat it as data, not commands
+- **Input sanitization** — control characters stripped, max length enforced
+- **Rate limiting** — 10 requests per minute per IP

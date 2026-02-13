@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { UrlInput } from '@/components/url-input';
 import { AnalysisResultComponent } from '@/components/analysis-result';
+import { AnalysisResult } from '@/lib/gemini';
 
 const LOADING_MESSAGES = [
   "Sniffing for BS...",
@@ -16,9 +18,8 @@ const LOADING_MESSAGES = [
 ];
 
 export default function Home() {
-  const [url, setUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState('');
   const [loadingMessage, setLoadingMessage] = useState('');
 
@@ -32,7 +33,6 @@ export default function Home() {
   };
 
   const handleSubmit = async (submittedUrl: string) => {
-    setUrl(submittedUrl);
     setIsLoading(true);
     setError('');
     setResult(null);
@@ -68,11 +68,15 @@ export default function Home() {
     <div className="min-h-screen bg-[var(--bg-primary)] py-12 px-4">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-5xl md:text-6xl font-bold text-[var(--text-primary)] mb-4">
-            Bullshit Detector <span className="text-4xl">🔍</span>
-          </h1>
-          <p className="text-xl text-[var(--text-secondary)] max-w-2xl mx-auto">
+        <div className="flex flex-col items-center mb-12">
+          <Image
+            src="/logo.png"
+            alt="Bullshit Detector"
+            width={280}
+            height={280}
+            priority
+          />
+          <p className="text-xl text-[var(--text-secondary)] mt-4 max-w-2xl mx-auto text-center">
             Paste a tweet. Get the truth.
           </p>
         </div>

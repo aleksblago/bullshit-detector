@@ -4,39 +4,54 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { validateTweetUrl } from '@/lib/validation';
-import { fetchTweet } from '@/lib/twitter';
-import { analyzeTweet } from '@/lib/gemini';
+import { fetchTweet, TweetData } from '@/lib/twitter';
+import { analyzeTweet, AnalysisResult } from '@/lib/gemini';
 
 // Simple in-memory rate limiting
 const rateLimitMap = new Map<string, number[]>();
 const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
 const MAX_REQUESTS_PER_WINDOW = 10;
+const MAX_TRACKED_IPS = 10000;
+let lastCleanup = Date.now();
 
 function checkRateLimit(ip: string): boolean {
   const now = Date.now();
-  const requests = rateLimitMap.get(ip) || [];
 
-  // Remove requests outside the window
-  const recentRequests = requests.filter(
-    (timestamp) => now - timestamp < RATE_LIMIT_WINDOW_MS
-  );
+  // Periodic cleanup: remove stale entries every 5 minutes
+  if (now - lastCleanup > 300000) {
+    for (const [key, timestamps] of rateLimitMap.entries()) {
+      const recent = timestamps.filter(t => now - t < RATE_LIMIT_WINDOW_MS);
+      if (recent.length === 0) {
+        rateLimitMap.delete(key);
+      } else {
+        rateLimitMap.set(key, recent);
+      }
+    }
+    lastCleanup = now;
+  }
+
+  // Hard cap on tracked IPs to prevent memory exhaustion
+  if (rateLimitMap.size > MAX_TRACKED_IPS && !rateLimitMap.has(ip)) {
+    return true; // Allow but don't track if map is full
+  }
+
+  const requests = rateLimitMap.get(ip) || [];
+  const recentRequests = requests.filter(t => now - t < RATE_LIMIT_WINDOW_MS);
 
   if (recentRequests.length >= MAX_REQUESTS_PER_WINDOW) {
     return false;
   }
 
-  // Add current request
   recentRequests.push(now);
   rateLimitMap.set(ip, recentRequests);
-
   return true;
 }
 
 export async function POST(request: NextRequest) {
   try {
     // Get client IP for rate limiting
-    const ip = request.headers.get('x-forwarded-for') ||
-               request.headers.get('x-real-ip') ||
+    const ip = request.headers.get('x-real-ip') ||
+               request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
                'unknown';
 
     // Check rate limit
@@ -48,12 +63,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse request body
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: 'Invalid request body' },
+        { status: 400 }
+      );
+    }
     const { url } = body;
 
-    if (!url) {
+    if (!url || typeof url !== 'string') {
       return NextResponse.json(
-        { error: 'URL is required' },
+        { error: 'URL is required and must be a string' },
         { status: 400 }
       );
     }
@@ -71,7 +94,7 @@ export async function POST(request: NextRequest) {
     const tweetId = validation.tweetId;
 
     // Fetch tweet data
-    let tweetData;
+    let tweetData: TweetData;
     try {
       tweetData = await fetchTweet(tweetId);
     } catch (error) {
@@ -83,7 +106,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Analyze with Gemini
-    let analysis;
+    let analysis: AnalysisResult;
     try {
       const authorInfo = `@${tweetData.author.username} (${tweetData.author.name})${
         tweetData.author.verified ? ' [Verified]' : ''

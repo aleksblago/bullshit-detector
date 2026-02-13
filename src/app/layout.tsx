@@ -13,8 +13,33 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Bullshit Detector",
-  description: "AI-powered analysis of Twitter/X posts for truthfulness, bias, and manipulation. Paste a tweet and get the truth.",
+  title: "Bullshit Detector — AI-Powered Tweet Fact Checker",
+  description: "Paste any Twitter/X post URL and get an instant AI-powered truthfulness score. Detects lies, bias, manipulation, logical fallacies, and AI-generated images. Free fact-checking tool.",
+  keywords: ["fact checker", "tweet fact check", "misinformation detector", "bias detector", "Twitter fact check", "X fact check", "AI fact checker", "bullshit detector", "fake news detector", "manipulation detector"],
+  authors: [{ name: "Bullshit Detector" }],
+  openGraph: {
+    description: "Paste a tweet. Get the truth. AI-powered analysis scores posts 0-100% for truthfulness, detects bias, manipulation, and logical fallacies.",
+    type: "website",
+    siteName: "Bullshit Detector",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    description: "Paste a tweet. Get the truth. AI-powered analysis scores posts 0-100% for truthfulness, detects bias, manipulation, and logical fallacies.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon-96x96.png", sizes: "96x96", type: "image/png" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
+  manifest: "/site.webmanifest",
 };
 
 export default function RootLayout({

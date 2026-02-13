@@ -30,15 +30,38 @@ export interface AnalysisResult {
   }>;
 }
 
+const ALLOWED_IMAGE_HOSTS = [
+  'pbs.twimg.com',
+  'ton.twimg.com',
+  'abs.twimg.com',
+  'video.twimg.com',
+];
+
 /**
  * Fetch image and convert to base64 for Gemini multimodal input
  */
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10 MB
+
 async function fetchImageAsBase64(url: string): Promise<{ data: string; mimeType: string } | null> {
   try {
-    const response = await fetch(url);
+    const parsed = new URL(url);
+    if (!ALLOWED_IMAGE_HOSTS.includes(parsed.hostname)) {
+      console.warn('Blocked image fetch from non-Twitter domain:', parsed.hostname);
+      return null;
+    }
+
+    const response = await fetch(url, { signal: AbortSignal.timeout(10000) });
     if (!response.ok) return null;
 
+    const contentLength = response.headers.get('content-length');
+    if (contentLength && parseInt(contentLength) > MAX_IMAGE_BYTES) {
+      console.warn('Image too large, skipping:', url);
+      return null;
+    }
+
     const arrayBuffer = await response.arrayBuffer();
+    if (arrayBuffer.byteLength > MAX_IMAGE_BYTES) return null;
+
     const base64 = Buffer.from(arrayBuffer).toString('base64');
     const mimeType = response.headers.get('content-type') || 'image/jpeg';
 
@@ -100,7 +123,7 @@ export async function analyzeTweet(
   const prompt = buildAnalysisPrompt(tweetText, authorInfo, imageUrls.length > 0);
 
   // Prepare content parts
-  const parts: any[] = [{ text: prompt }];
+  const parts: Array<{ text: string } | { inlineData: { data: string; mimeType: string } }> = [{ text: prompt }];
 
   // Add images if present
   if (imageUrls.length > 0) {
@@ -132,8 +155,7 @@ export async function analyzeTweet(
       },
     });
 
-    const response = result;
-    const text = response.text;
+    const text = result.text;
 
     if (!text) {
       throw new Error('No response text from Gemini API');
@@ -145,9 +167,8 @@ export async function analyzeTweet(
     // Extract grounding sources if available
     const groundingSources: Array<{ title: string; url: string }> = [];
 
-    // Check for grounding metadata in the response
-    if (response.candidates?.[0]?.groundingMetadata?.groundingChunks) {
-      const chunks = response.candidates[0].groundingMetadata.groundingChunks;
+    if (result.candidates?.[0]?.groundingMetadata?.groundingChunks) {
+      const chunks = result.candidates[0].groundingMetadata.groundingChunks;
       for (const chunk of chunks) {
         if (chunk.web?.uri && chunk.web?.title) {
           groundingSources.push({
