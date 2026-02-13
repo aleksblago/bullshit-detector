@@ -21,20 +21,21 @@ export function ScoreGauge({ score, verdict }: ScoreGaugeProps) {
   useEffect(() => {
     const duration = 1000;
     const startTime = performance.now();
+    let frameId: number;
 
     function animate(currentTime: number) {
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      // Ease-out curve
       const eased = 1 - Math.pow(1 - progress, 3);
       setAnimatedScore(Math.round(eased * score));
 
       if (progress < 1) {
-        requestAnimationFrame(animate);
+        frameId = requestAnimationFrame(animate);
       }
     }
 
-    requestAnimationFrame(animate);
+    frameId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frameId);
   }, [score]);
 
   const color = getScoreColor(score);

@@ -74,9 +74,9 @@ export async function POST(request: NextRequest) {
     }
     const { url } = body;
 
-    if (!url) {
+    if (!url || typeof url !== 'string') {
       return NextResponse.json(
-        { error: 'URL is required' },
+        { error: 'URL is required and must be a string' },
         { status: 400 }
       );
     }

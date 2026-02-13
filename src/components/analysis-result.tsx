@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { ScoreGauge } from './score-gauge';
 import { ReasonChip } from './reason-chip';
+import type { AnalysisResult } from '@/lib/gemini';
 
 function isSafeUrl(url: string): boolean {
   try {
@@ -13,31 +14,6 @@ function isSafeUrl(url: string): boolean {
   }
 }
 
-interface AnalysisResult {
-  score: number;
-  verdict: string;
-  summary: string;
-  reasons: Array<{
-    tag: string;
-    type: 'positive' | 'negative' | 'neutral';
-    explanation: string;
-  }>;
-  claims: Array<{
-    claim: string;
-    verdict: 'true' | 'false' | 'misleading' | 'unverifiable' | 'opinion';
-    evidence: string;
-  }>;
-  imageAnalysis: {
-    description: string;
-    concerns: string[];
-    likelyAuthentic: boolean;
-  } | null;
-  groundingSources?: Array<{
-    title: string;
-    url: string;
-  }>;
-}
-
 interface AnalysisResultProps {
   result: AnalysisResult;
 }
@@ -46,6 +22,11 @@ export function AnalysisResultComponent({ result }: AnalysisResultProps) {
   const [claimsExpanded, setClaimsExpanded] = useState(false);
   const [imageExpanded, setImageExpanded] = useState(false);
   const [sourcesExpanded, setSourcesExpanded] = useState(false);
+
+  const safeSources = useMemo(
+    () => (result.groundingSources ?? []).filter(s => isSafeUrl(s.url)),
+    [result.groundingSources]
+  );
 
   const getClaimBadge = (verdict: string) => {
     switch (verdict) {
@@ -212,14 +193,14 @@ export function AnalysisResultComponent({ result }: AnalysisResultProps) {
       )}
 
       {/* Sources */}
-      {result.groundingSources && result.groundingSources.length > 0 && (
+      {safeSources.length > 0 && (
         <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden">
           <button
             onClick={() => setSourcesExpanded(!sourcesExpanded)}
             className="w-full px-6 py-4 flex items-center justify-between hover:bg-[var(--bg-input)] transition-colors"
           >
             <h3 className="text-xl font-semibold text-[var(--text-primary)]">
-              Verification Sources ({result.groundingSources.length})
+              Verification Sources ({safeSources.length})
             </h3>
             <svg
               className={`w-5 h-5 text-[var(--text-secondary)] transition-transform ${
@@ -235,24 +216,22 @@ export function AnalysisResultComponent({ result }: AnalysisResultProps) {
 
           {sourcesExpanded && (
             <div className="px-6 pb-6 space-y-2">
-              {result.groundingSources
-                .filter(source => isSafeUrl(source.url))
-                .map((source, index) => (
-                  <a
-                    key={index}
-                    href={source.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block p-3 rounded-lg hover:bg-[var(--bg-input)] transition-colors border border-[var(--border)]"
-                  >
-                    <p className="text-[var(--accent)] hover:underline font-medium">
-                      {source.title}
-                    </p>
-                    <p className="text-xs text-[var(--text-muted)] truncate mt-1">
-                      {source.url}
-                    </p>
-                  </a>
-                ))}
+              {safeSources.map((source, index) => (
+                <a
+                  key={index}
+                  href={source.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block p-3 rounded-lg hover:bg-[var(--bg-input)] transition-colors border border-[var(--border)]"
+                >
+                  <p className="text-[var(--accent)] hover:underline font-medium">
+                    {source.title}
+                  </p>
+                  <p className="text-xs text-[var(--text-muted)] truncate mt-1">
+                    {source.url}
+                  </p>
+                </a>
+              ))}
             </div>
           )}
         </div>
