@@ -1,6 +1,18 @@
-# Bullshit Detector
+<div align="center">
+  <img src="public/logo.png" alt="Bullshit Detector" width="326" height="338" />
 
-AI-powered fact-checker for Twitter/X posts. Paste a tweet URL, get an instant truthfulness score with detailed analysis of claims, bias, manipulation tactics, and image authenticity.
+  # Bullshit Detector
+
+  AI-powered fact-checker for Twitter/X posts. Paste a tweet URL, get an instant truthfulness score with detailed analysis of claims, bias, manipulation tactics, and image authenticity.
+
+  [![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=flat&logo=vercel)](https://bullshit-detector-psi.vercel.app)
+  [![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat&logo=next.js)](https://nextjs.org)
+  [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat&logo=typescript&logoColor=white)](https://typescriptlang.org)
+  [![Gemini AI](https://img.shields.io/badge/Gemini-2.5%20Flash-4285F4?style=flat&logo=google&logoColor=white)](https://ai.google.dev)
+  [![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4-06B6D4?style=flat&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
+
+  **[Try it live](https://bullshit-detector-psi.vercel.app)**
+</div>
 
 ## How It Works
 
@@ -69,7 +81,7 @@ Reports on a confirmed AI-altered photo presented as real by an official account
 
 ```bash
 # Clone the repo
-git clone <repo-url>
+git clone https://github.com/aleksblago/bullshit-detector.git
 cd bullshit-detector
 
 # Install dependencies
